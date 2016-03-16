@@ -11,7 +11,7 @@ Li, J. and Tibshirani, R. Finding consistent patterns: A nonparametric approach 
 \usage{
 GenePermGSEA(countMatrix, GeneScoreType, idxCase, idxControl, GenesetFile,
   minGenesetSize = 10, maxGenesetSize = 300, q = 1, nPerm = 1000,
-  GSEAtype = "absFilter", FDR = 0.05, FDRfilter = 0.05)
+  GSEAtype = "absFilter", FDR = 0.05, FDRfilter = 0.05, minCount = 3)
 }
 \arguments{
 \item{countMatrix}{Normalized RNA-seq read count matrix.}
@@ -36,13 +36,15 @@ GenePermGSEA(countMatrix, GeneScoreType, idxCase, idxControl, GenesetFile,
 
 \item{FDR}{FDR cutoff for the original or absolute GSEA. Default = 0.05}
 
-\item{FDRfilter}{FDR cutoff for the one-tailed absolute GSEA for filtering. Default = 0.05}
+\item{FDRfilter}{FDR cutoff for the one-tailed absolute GSEA for absolute filtering (only working when GSEAtype is "absFilter"). Default = 0.05}
+
+\item{minCount}{Minimum median count of a gene to be included in the analysis. It is used for gene-filtering to avoid genes having small read counts. Default = 3}
 }
 \value{
 GSEA result table sorted by FDR Q-value.
 }
 \description{
-Gene-permuting GSEA (or preranked GSEA) generates a lot of false positive gene-sets due to the inter-gene correlation in each gene set. Such false positives can be successfully reduced by filtering with the one-tailed absolute GSEA results. This function provides gene-permuting GSEA calculation with or without the absolute filtering.
+Gene-set enrichment analysis (GSEA) is popularly used to assess the enrichment of differential signal in a pre-defined gene-set without using a cutoff threshold for differential expression. The significance of enrichment is evaluated through sample- or gene-permutation method. Although the sample-permutation approach is highly recommended due to its good false positive control, we must use gene-permuting method if the number of samples is small. However, such gene-permuting GSEA (or preranked GSEA) generates a lot of false positive gene-sets as the inter-gene correlation in each gene set increases. These false positives can be successfully reduced by filtering with the one-tailed absolute GSEA results. This package provides a function that performs gene-permuting GSEA calculation with or without the absolute filtering. Without filtering, users can perform (original) two-tailed or one-tailed absolute GSEA.
 }
 \details{
 Typical usages are
@@ -54,13 +56,13 @@ GenePermGSEA(countMatrix = countMatrix, GeneScoreType = "FC", idxCase = 1:5,
 data(example)
 
 # Create a gene set file and save it to your local directory.
-# Note that you can use your local gene set file (tab-delimited) directly.
+# Note that you can use your local gene set file (tab-delimited like *.gmt file from mSigDB).
 # But here, we will generate a toy gene set file to show the structure of this gene set file.
-# It consists of 100 gene sets and each contains 100 genes.
+# It consists of 100 gene sets and each contains 50 genes.
 
 for(Geneset in 1:100)
 {
-   GenesetName = paste("Geneset", Geneset, sep = "_")
+  GenesetName = paste("Geneset", Geneset, sep = "_")
   Genes = paste("Gene", (Geneset*50-49):(Geneset*50), sep="", collapse = '\\t')
   Geneset = paste(GenesetName, Genes, sep = '\\t')
   write(Geneset, file = "geneset.txt", append = TRUE, ncolumns = 1)
@@ -68,7 +70,7 @@ for(Geneset in 1:100)
 
 # Run Gene-permuting GSEA
 RES = GenePermGSEA(countMatrix = example, GeneScoreType = "FC", idxCase = 1:5,
-                   idxControl = 6:10, GenesetFile = 'geneset.txt', GSEAtype = "absFilter")
+                    idxControl = 6:10, GenesetFile = 'geneset.txt', GSEAtype = "absFilter")
 RES
 
 }

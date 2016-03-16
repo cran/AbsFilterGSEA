@@ -2,5 +2,6 @@
 
 export(GenePermGSEA)
 import(Rcpp)
+importFrom(stats,median)
 importFrom(stats,sd)
 useDynLib(AbsFilterGSEA)

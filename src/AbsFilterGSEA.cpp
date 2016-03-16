@@ -41,8 +41,8 @@ RcppExport SEXP OnetailedGSEA(SEXP tvalue, SEXP genesetfile, SEXP min, SEXP max,
 	NumericVector rank(Tvalue.size());
 	CharacterVector symbol = Tvalue.names();
 	vector<string> GENESYMBOL(Tvalue.size());
-	int ESweight1 = as<int>(q);
-	double ESweight = (double) ESweight1;
+  double ESweight = as<double>(q);
+//	double ESweight = (double) ESweight1;
 	map<string, int> gene2index;
 	vector<int>::iterator iV;
 	int i, k, gs, PERM;
@@ -89,7 +89,10 @@ RcppExport SEXP OnetailedGSEA(SEXP tvalue, SEXP genesetfile, SEXP min, SEXP max,
 	}
 	infile.close();
 
-
+	if(nGeneset == 0)
+	{
+	  Rcpp::warning("No gene-set passed the condition for gene-set size. Please check the option minGenesetSize and maxGenesetSize. Also, the gene-set file must be tab-delimited (like .gmt file). Refer to the format of gene-set file in the example code of GenePermGSEA function.");
+	}
 
 	//Store gene set member
 	std::vector<vector<int> > rowGeneset;
@@ -148,8 +151,10 @@ RcppExport SEXP OnetailedGSEA(SEXP tvalue, SEXP genesetfile, SEXP min, SEXP max,
 		for(iV=rowGeneset[gs].begin(); iV !=rowGeneset[gs].end(); iV++)
 		{
 			rankGene.push_back(rank[*iV]); // rank == order
-			N_R += pow(fabs(Tvalue(rank[*iV])),ESweight);  //Pointer?
+		  if(ESweight == 0.0){N_R += 1;}
+		  if(ESweight > 0.0){N_R += fabs(Tvalue[rank[*iV]]);}
 		}
+
 		sort(rankGene.begin(), rankGene.end());
 
 		enrich[gs] = P_hit = 0. ;
@@ -160,11 +165,13 @@ RcppExport SEXP OnetailedGSEA(SEXP tvalue, SEXP genesetfile, SEXP min, SEXP max,
 				enrich[gs] = P_hit-P_miss;
 
 			//at hit
-			P_hit += fabs(Tvalue[rankGene[kk]])/N_R;
+			if(ESweight == 0.0){P_hit += 1.0/N_R;}
+			if(ESweight > 0.0){P_hit += fabs(Tvalue[rankGene[kk]])/N_R;}
+
 			if(enrich[gs] < (P_hit - P_miss))
 				enrich[gs] = P_hit-P_miss;
 		}
-	}
+	} // finished
 
 	// Do permutation
 	int size = Tvalue.size();
@@ -199,7 +206,8 @@ RcppExport SEXP OnetailedGSEA(SEXP tvalue, SEXP genesetfile, SEXP min, SEXP max,
 			for(iV=rowGeneset[gs].begin(); iV !=rowGeneset[gs].end(); iV++)
 			{
 				rankGene.push_back(rank[*iV]);
-				N_R += pow(fabs(Tvalue_temp[*iV]),ESweight);
+			  if(ESweight == 0.0){N_R += 1;}
+			  if(ESweight > 0.0){N_R += fabs(Tvalue_temp[*iV]);}
 			}
 			sort(rankGene.begin(), rankGene.end());
 
@@ -208,10 +216,11 @@ RcppExport SEXP OnetailedGSEA(SEXP tvalue, SEXP genesetfile, SEXP min, SEXP max,
 				// at hit-1
 				P_miss = 1./(Tvalue.size()-rankGene.size()) * (rankGene[kk] - kk);
 				if(enrich[nGeneset*PERM+gs] < (P_hit - P_miss))
-					enrich[nGeneset*PERM+gs] = P_hit-  P_miss;
+					enrich[nGeneset*PERM+gs] = P_hit-P_miss;
 
 				// at hit
-				P_hit += fabs(Tvalue[rankGene[kk]])/N_R;
+				if(ESweight == 0.0){P_hit += 1.0/N_R;}
+				if(ESweight > 0.0){P_hit += fabs(Tvalue[rankGene[kk]])/N_R;}
 				if(enrich[nGeneset*PERM+gs] < (P_hit - P_miss))
 					enrich[nGeneset*PERM+gs] = P_hit - P_miss;
 			}
@@ -356,8 +365,8 @@ RcppExport SEXP TwotailedGSEA(SEXP tvalue, SEXP genesetfile, SEXP min, SEXP max,
 	vector<int> Elements;
 	NumericVector Tvalue = as<NumericVector>(tvalue);
 	NumericVector rank(Tvalue.size());
-	int ESweight1 = as<int>(q);
-	double ESweight = (double) ESweight1;
+	double ESweight = as<double>(q);
+	//double ESweight = (double) ESweight1;
 	CharacterVector symbol = Tvalue.names();
 	vector<string> GENESYMBOL(Tvalue.size());
 	map<string, int> gene2index;
@@ -407,7 +416,10 @@ RcppExport SEXP TwotailedGSEA(SEXP tvalue, SEXP genesetfile, SEXP min, SEXP max,
 	}
 	infile.close();
 
-
+	if(nGeneset == 0)
+	{
+	  Rcpp::warning("No gene-set passed the condition for gene-set size. Please check the option minGenesetSize and maxGenesetSize. Also, the gene-set file must be tab-delimited (like .gmt file). Refer to the format of gene-set file in the example code of GenePermGSEA function.");
+	}
 
 	//Store gene set member
 	std::vector<std::vector<int> > rowGeneset;
@@ -467,8 +479,12 @@ RcppExport SEXP TwotailedGSEA(SEXP tvalue, SEXP genesetfile, SEXP min, SEXP max,
 		for(iV=rowGeneset[gs].begin(); iV !=rowGeneset[gs].end(); iV++)
 		{
 			rankGene.push_back(rank[*iV]); // rank == order
-			N_R += pow(fabs(Tvalue(rank[*iV])), ESweight);  //Pointer?
+		  if(ESweight == 0.0){N_R+=1;
+		  }else{
+		    N_R += fabs(Tvalue(rank[*iV])); //Pointer?
+		  }
 		}
+
 		sort(rankGene.begin(), rankGene.end());
 
 		enrich[gs] = P_hit = 0. ;
@@ -479,7 +495,10 @@ RcppExport SEXP TwotailedGSEA(SEXP tvalue, SEXP genesetfile, SEXP min, SEXP max,
 				enrich[gs] = P_hit-P_miss;
 
 			//at hit
-			P_hit += fabs(Tvalue[rankGene[kk]])/N_R;
+			if(ESweight == 0.0){P_hit += 1.0/N_R;
+			}else{
+			  P_hit += fabs(Tvalue[rankGene[kk]])/N_R;
+			}
 			if(fabs(enrich[gs]) < fabs(P_hit - P_miss))
 				enrich[gs] = P_hit-P_miss;
 		}
@@ -519,7 +538,10 @@ RcppExport SEXP TwotailedGSEA(SEXP tvalue, SEXP genesetfile, SEXP min, SEXP max,
 			for(iV=rowGeneset[gs].begin(); iV !=rowGeneset[gs].end(); iV++)
 			{
 				rankGene.push_back(rank[*iV]);
-				N_R += pow(fabs(Tvalue_temp[*iV]), ESweight);
+			  if(ESweight == 0.0){N_R += 1;
+			  }else{
+			    N_R += fabs(Tvalue_temp[*iV]);
+			  }
 			}
 			sort(rankGene.begin(), rankGene.end());
 
@@ -531,7 +553,10 @@ RcppExport SEXP TwotailedGSEA(SEXP tvalue, SEXP genesetfile, SEXP min, SEXP max,
 					enrich[nGeneset*PERM+gs] = P_hit-  P_miss;
 
 				// at hit
-				P_hit += fabs(Tvalue[rankGene[kk]])/N_R;
+				if(ESweight == 0.0){P_hit += 1.0/N_R;
+				}else{
+				  P_hit += fabs(Tvalue[rankGene[kk]])/N_R;
+				}
 				if(fabs(enrich[nGeneset*PERM+gs]) < fabs(P_hit - P_miss))
 					enrich[nGeneset*PERM+gs] = P_hit - P_miss;
 			}
