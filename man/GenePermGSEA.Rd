@@ -10,19 +10,22 @@ Li, J. and Tibshirani, R. Finding consistent patterns: A nonparametric approach 
 }
 \usage{
 GenePermGSEA(countMatrix, GeneScoreType, idxCase, idxControl, GenesetFile,
-  minGenesetSize = 10, maxGenesetSize = 300, q = 1, nPerm = 1000,
-  GSEAtype = "absFilter", FDR = 0.05, FDRfilter = 0.05, minCount = 3)
+  normalization, minGenesetSize = 10, maxGenesetSize = 300, q = 1,
+  nPerm = 1000, GSEAtype = "absFilter", FDR = 0.05, FDRfilter = 0.05,
+  minCount = 3)
 }
 \arguments{
 \item{countMatrix}{Normalized RNA-seq read count matrix.}
 
-\item{GeneScoreType}{Type of gene score. Possible gene score is "SNR", "FC" (log fold change score) or "RANKSUM" (zero centered).}
+\item{GeneScoreType}{Type of gene score. Possible gene score is "moderated_t","SNR", "FC" (log fold change score) or "RANKSUM" (zero centered).}
 
-\item{idxCase}{Indices for case samples in the count matrix. e.g., 1:5}
+\item{idxCase}{Indices for case samples in the count matrix. e.g., 1:3}
 
-\item{idxControl}{Indices for control samples in the count matrix. e.g., 6:10}
+\item{idxControl}{Indices for control samples in the count matrix. e.g., 4:6}
 
 \item{GenesetFile}{File path for gene set file. Typical GMT file or its similar 'tab-delimited' file is available. e.g., "C:/geneset.gmt"}
+
+\item{normalization}{Type 'DESeq' if the input matrix is composed of raw read counts. It will normalize the raw count data using DESeq method. Or type 'AlreadyNormalized' if the input matrix is already normalized.}
 
 \item{minGenesetSize}{Minimum size of gene set allowed. Gene-sets of which sizes are below this value are filtered out from the analysis. Default = 10}
 
@@ -38,7 +41,7 @@ GenePermGSEA(countMatrix, GeneScoreType, idxCase, idxControl, GenesetFile,
 
 \item{FDRfilter}{FDR cutoff for the one-tailed absolute GSEA for absolute filtering (only working when GSEAtype is "absFilter"). Default = 0.05}
 
-\item{minCount}{Minimum median count of a gene to be included in the analysis. It is used for gene-filtering to avoid genes having small read counts. Default = 3}
+\item{minCount}{Minimum median count of a gene to be included in the analysis. It is used for gene-filtering to avoid genes having small read counts. Default = 0}
 }
 \value{
 GSEA result table sorted by FDR Q-value.
@@ -48,8 +51,8 @@ Gene-set enrichment analysis (GSEA) is popularly used to assess the enrichment o
 }
 \details{
 Typical usages are
-GenePermGSEA(countMatrix = countMatrix, GeneScoreType = "FC", idxCase = 1:5,
-                   idxControl = 6:10, GenesetFile = 'geneset.txt', GSEAtype = "absFilter")
+GenePermGSEA(countMatrix = countMatrix, GeneScoreType = "moderated_t", idxCase = 1:3,
+                   idxControl = 4:6, GenesetFile = 'geneset.txt', GSEAtype = "absFilter")
 }
 \examples{
 
@@ -58,19 +61,20 @@ data(example)
 # Create a gene set file and save it to your local directory.
 # Note that you can use your local gene set file (tab-delimited like *.gmt file from mSigDB).
 # But here, we will generate a toy gene set file to show the structure of this gene set file.
-# It consists of 100 gene sets and each contains 50 genes.
+# It consists of 50 gene sets and each contains 100 genes.
 
-for(Geneset in 1:100)
+for(Geneset in 1:50)
 {
   GenesetName = paste("Geneset", Geneset, sep = "_")
-  Genes = paste("Gene", (Geneset*50-49):(Geneset*50), sep="", collapse = '\\t')
+  Genes = paste("Gene", (Geneset*100-99):(Geneset*100), sep="", collapse = '\\t')
   Geneset = paste(GenesetName, Genes, sep = '\\t')
   write(Geneset, file = "geneset.txt", append = TRUE, ncolumns = 1)
 }
 
 # Run Gene-permuting GSEA
-RES = GenePermGSEA(countMatrix = example, GeneScoreType = "FC", idxCase = 1:5,
-                    idxControl = 6:10, GenesetFile = 'geneset.txt', GSEAtype = "absFilter")
+RES = GenePermGSEA(countMatrix = example, GeneScoreType = "moderated_t", idxCase = 1:3,
+                    idxControl = 4:6, GenesetFile = 'geneset.txt', normalization = 'DESeq',
+                    GSEAtype = "absFilter")
 RES
 
 }
@@ -78,5 +82,6 @@ RES
 Nam, D. Effect of the absolute statistic on gene-sampling gene-set analysis methods. Stat Methods Med Res 2015.
 Subramanian, A., et al. Gene set enrichment analysis: A knowledge-based approach for interpreting genome-wide expression profiles. P Natl Acad Sci USA 2005;102(43):15545-15550.
 Li, J. and Tibshirani, R. Finding consistent patterns: A nonparametric approach for identifying differential expression in RNA-Seq data. Statistical Methods in Medical Research 2013;22(5):519-536.
+Simon Anders and Wolfgang Huber (2010): Differential expression analysis for sequence count data. Genome Biology 11:R106
 }
 

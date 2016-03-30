@@ -16,7 +16,15 @@ snr = function(value, g1, g2){
   return(result)
 }
 
-
+moderated_t = function(mat, g1, g2){
+  arr = rep(0, length(g1)+length(g2))
+  arr[g1] = 1
+  design = cbind(Intersect = 1, x = arr)
+  fit = lmFit(mat, design = design)
+  eb = eBayes(fit)
+  moderated_tvalue = eb$t[,2]
+  return(moderated_tvalue)
+}
 
 foldchange = function(value, g1, g2)
 {
@@ -43,13 +51,15 @@ ranksum = function(value, g1, g2)
 #'
 #' @param countMatrix Normalized RNA-seq read count matrix.
 #'
-#' @param GeneScoreType Type of gene score. Possible gene score is "SNR", "FC" (log fold change score) or "RANKSUM" (zero centered).
+#' @param GeneScoreType Type of gene score. Possible gene score is "moderated_t","SNR", "FC" (log fold change score) or "RANKSUM" (zero centered).
 #'
-#' @param idxCase Indices for case samples in the count matrix. e.g., 1:5
+#' @param idxCase Indices for case samples in the count matrix. e.g., 1:3
 #'
-#' @param idxControl Indices for control samples in the count matrix. e.g., 6:10
+#' @param idxControl Indices for control samples in the count matrix. e.g., 4:6
 #'
 #' @param GenesetFile File path for gene set file. Typical GMT file or its similar 'tab-delimited' file is available. e.g., "C:/geneset.gmt"
+#'
+#' @param normalization Type 'DESeq' if the input matrix is composed of raw read counts. It will normalize the raw count data using DESeq method. Or type 'AlreadyNormalized' if the input matrix is already normalized.
 #'
 #' @param minGenesetSize Minimum size of gene set allowed. Gene-sets of which sizes are below this value are filtered out from the analysis. Default = 10
 #'
@@ -65,13 +75,21 @@ ranksum = function(value, g1, g2)
 #'
 #' @param FDRfilter FDR cutoff for the one-tailed absolute GSEA for absolute filtering (only working when GSEAtype is "absFilter"). Default = 0.05
 #'
-#' @param minCount Minimum median count of a gene to be included in the analysis. It is used for gene-filtering to avoid genes having small read counts. Default = 3
+#' @param minCount Minimum median count of a gene to be included in the analysis. It is used for gene-filtering to avoid genes having small read counts. Default = 0
 #'
 #' @import Rcpp
+#'
+#' @import DESeq
+#'
+#' @importFrom limma lmFit
+#'
+#' @importFrom limma eBayes
 #'
 #' @importFrom stats sd
 #'
 #' @importFrom stats median
+#'
+#' @importFrom stats quantile
 #'
 #' @return GSEA result table sorted by FDR Q-value.
 #'
@@ -82,26 +100,27 @@ ranksum = function(value, g1, g2)
 #' # Create a gene set file and save it to your local directory.
 #' # Note that you can use your local gene set file (tab-delimited like *.gmt file from mSigDB).
 #' # But here, we will generate a toy gene set file to show the structure of this gene set file.
-#' # It consists of 100 gene sets and each contains 50 genes.
+#' # It consists of 50 gene sets and each contains 100 genes.
 #'
-#' for(Geneset in 1:100)
+#' for(Geneset in 1:50)
 #' {
 #'   GenesetName = paste("Geneset", Geneset, sep = "_")
-#'   Genes = paste("Gene", (Geneset*50-49):(Geneset*50), sep="", collapse = '\t')
+#'   Genes = paste("Gene", (Geneset*100-99):(Geneset*100), sep="", collapse = '\t')
 #'   Geneset = paste(GenesetName, Genes, sep = '\t')
 #'   write(Geneset, file = "geneset.txt", append = TRUE, ncolumns = 1)
 #' }
 #'
 #' # Run Gene-permuting GSEA
-#' RES = GenePermGSEA(countMatrix = example, GeneScoreType = "FC", idxCase = 1:5,
-#'                     idxControl = 6:10, GenesetFile = 'geneset.txt', GSEAtype = "absFilter")
+#' RES = GenePermGSEA(countMatrix = example, GeneScoreType = "moderated_t", idxCase = 1:3,
+#'                     idxControl = 4:6, GenesetFile = 'geneset.txt', normalization = 'DESeq',
+#'                     GSEAtype = "absFilter")
 #' RES
 #'
 #' @export
 #'
 #' @details Typical usages are
-#' GenePermGSEA(countMatrix = countMatrix, GeneScoreType = "FC", idxCase = 1:5,
-#'                    idxControl = 6:10, GenesetFile = 'geneset.txt', GSEAtype = "absFilter")
+#' GenePermGSEA(countMatrix = countMatrix, GeneScoreType = "moderated_t", idxCase = 1:3,
+#'                    idxControl = 4:6, GenesetFile = 'geneset.txt', GSEAtype = "absFilter")
 #'
 #' @source Nam, D. Effect of the absolute statistic on gene-sampling gene-set analysis methods. Stat Methods Med Res 2015.
 #' Subramanian, A., et al. Gene set enrichment analysis: A knowledge-based approach for interpreting genome-wide expression profiles. P Natl Acad Sci USA 2005;102(43):15545-15550.
@@ -110,14 +129,15 @@ ranksum = function(value, g1, g2)
 #' @references Nam, D. Effect of the absolute statistic on gene-sampling gene-set analysis methods. Stat Methods Med Res 2015.
 #' Subramanian, A., et al. Gene set enrichment analysis: A knowledge-based approach for interpreting genome-wide expression profiles. P Natl Acad Sci USA 2005;102(43):15545-15550.
 #' Li, J. and Tibshirani, R. Finding consistent patterns: A nonparametric approach for identifying differential expression in RNA-Seq data. Statistical Methods in Medical Research 2013;22(5):519-536.
+#' Simon Anders and Wolfgang Huber (2010): Differential expression analysis for sequence count data. Genome Biology 11:R106
 #'
 #' @useDynLib AbsFilterGSEA
-GenePermGSEA = function(countMatrix, GeneScoreType, idxCase, idxControl, GenesetFile, minGenesetSize=10, maxGenesetSize=300, q=1, nPerm=1000, GSEAtype="absFilter", FDR=0.05, FDRfilter=0.05, minCount=3)
+GenePermGSEA = function(countMatrix, GeneScoreType, idxCase, idxControl, GenesetFile, normalization, minGenesetSize=10, maxGenesetSize=300, q=1, nPerm=1000, GSEAtype="absFilter", FDR=0.05, FDRfilter=0.05, minCount=3)
 {
   dimMat = try(dim(countMatrix))
   if(is.null(dimMat)){stop("The dimension of input count matrix is NULL.")}
   if(dimMat[1]*dimMat[2] == 0){stop("Count matrix must have positive dimension.")}
-  if(GeneScoreType!="SNR" & GeneScoreType!="FC" & GeneScoreType!="RANKSUM"){stop("Gene score type must be 'SNR', 'FC' or 'RANKSUM'.")}
+  if(GeneScoreType!="moderated_t" & GeneScoreType!="SNR" & GeneScoreType!="FC" & GeneScoreType!="RANKSUM"){stop("Gene score type must be 'SNR', 'FC' or 'RANKSUM'.")}
   if(length(idxCase)<1 | length(idxControl)<1){stop("idxCase and idxControl must be positive integer.")}
   if(!file.exists(GenesetFile)){stop(paste(GenesetFile, " : Such gene set file does not exist.", sep=""))}
   if(GSEAtype!="absolute" & GSEAtype !="original" & GSEAtype!="absFilter"){stop("GSEAtype must be 'absolute' (for absolute one-tailed GSEA), 'original' (both up and down direction(=two-tailed GSEA)) or 'absFilter' (Result for two-tailed GSEA filtered by one-tailed GSEA result).")}
@@ -133,9 +153,27 @@ GenePermGSEA = function(countMatrix, GeneScoreType, idxCase, idxControl, Geneset
         }else {stop("Input proper q (weight exponent of enrichment score.)")}
       }
 
+
   countMatrix = data.matrix(countMatrix)
-  index.deletion = which(apply(countMatrix,1,median)<minCount)
-  if(length(index.deletion)>0){ countMatrix = countMatrix[-index.deletion,] }
+
+  # DESeq normalization
+  if(normalization == 'DESeq')
+  {
+    condition = array(rep(1, length(c(idxCase, idxControl))))
+    condition[idxControl] = 2
+    cds = newCountDataSet(countMatrix, condition)
+    cds = estimateSizeFactors(cds)
+    sf = sizeFactors(cds)
+    countMatrix = sweep(countMatrix, 2, sf, "/")
+  }
+
+  # Filtering genes having small read number and add pseudocount (5% quantile of positive counts).
+  medianReads = apply(countMatrix, 1, median)
+  index.deletion = which(medianReads < minCount)
+  if(length(index.deletion)>0){countMatrix = countMatrix[-index.deletion,]}
+  pseudoCount = quantile(countMatrix, 0.05)
+  countMatrix = countMatrix + pseudoCount
+
   # Gene score
   if(GeneScoreType == 'SNR')
   {
@@ -149,7 +187,11 @@ GenePermGSEA = function(countMatrix, GeneScoreType, idxCase, idxControl, Geneset
   {
     FUNC = ranksum
   }
-  genescore = try(apply(countMatrix, 1, FUN = FUNC, g1 = idxCase, g2 = idxControl), silent = T)
+  genescore = if(sum(c("SNR","FC","RANKSUM")%in%GeneScoreType) == 1){
+    try(apply(countMatrix, 1, FUN = FUNC, g1 = idxCase, g2 = idxControl), silent = T)
+    }else if(GeneScoreType == 'moderated_t'){
+      try(moderated_t(mat = countMatrix, g1 = idxCase, g2 = idxControl), silent = T)}
+
   if(class(genescore)=='try-error'){stop("Invalid gene scores. Please check idxCase and idxControl (indices for case and control samples, respectively).")}
 
   if(q!=0 & qType == "integer"){genescore = genescore^q}
@@ -165,6 +207,9 @@ GenePermGSEA = function(countMatrix, GeneScoreType, idxCase, idxControl, Geneset
   {
     Result_table = Onetailed(genescore_abs, GenesetFile, minGenesetSize, maxGenesetSize, nPerm, FDR, q)
     Result_table = Result_table[order(Result_table[[5]]),]
+    #Result_table$NES = format(Result_table$NES, scientific = FALSE)
+    Result_table$Nominal.P.value = as.numeric(Result_table$Nominal.P.value)
+    Result_table$FDR.Q.value = signif(Result_table$FDR.Q.value,)
     return(Result_table)
   }
 
@@ -172,6 +217,9 @@ GenePermGSEA = function(countMatrix, GeneScoreType, idxCase, idxControl, Geneset
   {
     Result_table = Twotailed(genescore, GenesetFile, minGenesetSize, maxGenesetSize, nPerm, FDR, q)
     Result_table = Result_table[order(Result_table[[5]]),]
+   # Result_table$NES = format(Result_table$NES, scientific = FALSE)
+    Result_table$Nominal.P.value = as.numeric(Result_table$Nominal.P.value)
+    Result_table$FDR.Q.value = signif(Result_table$FDR.Q.value, 4)
     return(Result_table)
   }
 
@@ -182,6 +230,9 @@ GenePermGSEA = function(countMatrix, GeneScoreType, idxCase, idxControl, Geneset
     Filtered = which(Result_table_ord$GenesetName%in%Result_table_abs$GenesetName)
     Result_table = Result_table_ord[Filtered,]
     Result_table = Result_table[order(Result_table[[5]]),]
+    #Result_table$NES = format(Result_table$NES, scientific = FALSE)
+    Result_table$Nominal.P.value = as.numeric(Result_table$Nominal.P.value)
+    Result_table$FDR.Q.value = signif(Result_table$FDR.Q.value,4)
     return(Result_table)
   }
 }

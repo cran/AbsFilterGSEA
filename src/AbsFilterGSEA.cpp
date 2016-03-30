@@ -328,10 +328,14 @@ RcppExport SEXP OnetailedGSEA(SEXP tvalue, SEXP genesetfile, SEXP min, SEXP max,
 
 		if(enrich[gs] >= 0){
 			nominalP /= nPos;
+		  nominalP = Rf_fprec(nominalP, 4);
 		} else {
 			nominalP /= nNeg;
+		  nominalP = Rf_fprec(nominalP, 4);
 		}
 		FDR = FDRja/FDRmo;
+		FDR = Rf_fprec(FDR, 4);
+
 		// Result vectors
 		if(FDR <= CUT_OFF){
 			n = rowGeneset[gs].size();
@@ -665,13 +669,16 @@ RcppExport SEXP TwotailedGSEA(SEXP tvalue, SEXP genesetfile, SEXP min, SEXP max,
 
 		if(enrich[gs] >= 0){
 			nominalP /= nPos;
+		  nominalP = Rf_fprec(nominalP, 4);
 			updown = "UP";
 		} else {
 			nominalP /= nNeg;
+		  nominalP = Rf_fprec(nominalP, 4);
 			updown = "DOWN";
 		}
 
 		FDR = FDRja/FDRmo;
+		FDR = Rf_fprec(FDR, 4);
 		// Result vectors
 		if(FDR <= CUT_OFF){
 			n = rowGeneset[gs].size();
