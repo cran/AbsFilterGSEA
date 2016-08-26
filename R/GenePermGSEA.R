@@ -81,9 +81,9 @@ ranksum = function(value, g1, g2)
 #'
 #' @import DESeq
 #'
-#' @importFrom limma lmFit
-#'
 #' @importFrom limma eBayes
+#'
+#' @importFrom limma lmFit
 #'
 #' @importFrom stats sd
 #'
@@ -100,9 +100,9 @@ ranksum = function(value, g1, g2)
 #' # Create a gene set file and save it to your local directory.
 #' # Note that you can use your local gene set file (tab-delimited like *.gmt file from mSigDB).
 #' # But here, we will generate a toy gene set file to show the structure of this gene set file.
-#' # It consists of 50 gene sets and each contains 100 genes.
+#' # It consists of 100 gene sets and each contains 50 genes.
 #'
-#' for(Geneset in 1:50)
+#' for(Geneset in 1:100)
 #' {
 #'   GenesetName = paste("Geneset", Geneset, sep = "_")
 #'   Genes = paste("Gene", (Geneset*100-99):(Geneset*100), sep="", collapse = '\t')
@@ -153,6 +153,8 @@ GenePermGSEA = function(countMatrix, GeneScoreType, idxCase, idxControl, Geneset
         }else {stop("Input proper q (weight exponent of enrichment score.)")}
       }
 
+
+  options(scipen=-10)
 
   countMatrix = data.matrix(countMatrix)
 
@@ -207,9 +209,9 @@ GenePermGSEA = function(countMatrix, GeneScoreType, idxCase, idxControl, Geneset
   {
     Result_table = Onetailed(genescore_abs, GenesetFile, minGenesetSize, maxGenesetSize, nPerm, FDR, q)
     Result_table = Result_table[order(Result_table[[5]]),]
-    #Result_table$NES = format(Result_table$NES, scientific = FALSE)
+    Result_table$NES = format(Result_table$NES, scientific = FALSE)
     Result_table$Nominal.P.value = as.numeric(Result_table$Nominal.P.value)
-    Result_table$FDR.Q.value = signif(Result_table$FDR.Q.value,)
+    Result_table$FDR.Q.value = as.numeric(Result_table$FDR.Q.value)
     return(Result_table)
   }
 
@@ -217,9 +219,9 @@ GenePermGSEA = function(countMatrix, GeneScoreType, idxCase, idxControl, Geneset
   {
     Result_table = Twotailed(genescore, GenesetFile, minGenesetSize, maxGenesetSize, nPerm, FDR, q)
     Result_table = Result_table[order(Result_table[[5]]),]
-   # Result_table$NES = format(Result_table$NES, scientific = FALSE)
+    Result_table$NES = format(Result_table$NES, scientific = FALSE)
     Result_table$Nominal.P.value = as.numeric(Result_table$Nominal.P.value)
-    Result_table$FDR.Q.value = signif(Result_table$FDR.Q.value, 4)
+    Result_table$FDR.Q.value = as.numeric(Result_table$FDR.Q.value)
     return(Result_table)
   }
 
@@ -230,9 +232,9 @@ GenePermGSEA = function(countMatrix, GeneScoreType, idxCase, idxControl, Geneset
     Filtered = which(Result_table_ord$GenesetName%in%Result_table_abs$GenesetName)
     Result_table = Result_table_ord[Filtered,]
     Result_table = Result_table[order(Result_table[[5]]),]
-    #Result_table$NES = format(Result_table$NES, scientific = FALSE)
+    Result_table$NES = format(Result_table$NES, scientific = FALSE)
     Result_table$Nominal.P.value = as.numeric(Result_table$Nominal.P.value)
-    Result_table$FDR.Q.value = signif(Result_table$FDR.Q.value,4)
+    Result_table$FDR.Q.value = as.numeric(Result_table$FDR.Q.value)
     return(Result_table)
   }
 }

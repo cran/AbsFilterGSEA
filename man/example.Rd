@@ -2,10 +2,10 @@
 \alias{example}
 \docType{data}
 \title{Normalized RNA-seq count data}
-\description{This is toy example of RNA-seq raw read count table. It containes 5000 genes  and 6 samples (three for case and other three for control group).}
+\description{This is toy example of RNA-seq raw read count table. It containes 10000 genes  and 6 samples (three for case and other three for control group).}
 \usage{data("example")}
 \format{
-  A data frame with 5000 observations on the following 6 variables.
+  A data frame with 10000 observations on the following 6 variables.
   \describe{
     \item{\code{groupA1}}{a numeric vector for RNA-seq counts for case samples 1.}
 	\item{\code{groupA2}}{a numeric vector for RNA-seq counts for case samples 2.}
@@ -16,7 +16,7 @@
   }
 }
 \details{
-This read count dataset was simulated based on the negative binomial distribution. Mean and dispersion parameters were assessed from TCGA KIRC RNA-seq dataset. Normalization was done by using edgeR package.Geneset_41~45 are up-regulated and Geneset_46~50 are down-regulated gene sets.
+This read count dataset was simulated based on the negative binomial distribution. Mean and dispersion parameters were assessed from TCGA KIRC RNA-seq dataset. Normalization was done by using edgeR package.Geneset_81~90 are up-regulated and Geneset_91~100 are down-regulated gene sets.
 }
 \source{
 Cancer Genome Atlas Research, N. Comprehensive molecular characterization of clear cell renal cell carcinoma. Nature 2013;499(7456):43-49.

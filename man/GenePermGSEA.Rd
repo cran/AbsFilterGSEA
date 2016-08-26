@@ -61,9 +61,9 @@ data(example)
 # Create a gene set file and save it to your local directory.
 # Note that you can use your local gene set file (tab-delimited like *.gmt file from mSigDB).
 # But here, we will generate a toy gene set file to show the structure of this gene set file.
-# It consists of 50 gene sets and each contains 100 genes.
+# It consists of 100 gene sets and each contains 50 genes.
 
-for(Geneset in 1:50)
+for(Geneset in 1:100)
 {
   GenesetName = paste("Geneset", Geneset, sep = "_")
   Genes = paste("Gene", (Geneset*100-99):(Geneset*100), sep="", collapse = '\\t')

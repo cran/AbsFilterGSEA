@@ -1,11 +1,9 @@
-6e9a63f703e847175a684385e50ee3bb *DESCRIPTION
+b69bfcde2469a1bce2a6057eacc9a709 *DESCRIPTION
 686b4cf4d7d77c1094984cdfeaee28f1 *NAMESPACE
-fa7242a14eeedb8a41d3154122094367 *R/GenePermGSEA.R
+c399235e88f613094e02054c510b23fc *R/GenePermGSEA.R
 89e6ae394b4e979ae8b172dc3b09ddd6 *R/RcppExports.R
-8604baa84d4a126d128504f26ff9a5a3 *data/example.rda
-b07894c8f235613f72c754b66c174973 *man/GenePermGSEA.Rd
-f4c0a6c4bc0a3469c97583178c4ff918 *man/example.Rd
+24a44da080cbdb4559daa135b45401c4 *data/example.rda
+f3e47b2bd575b2464c1fc2fdf600b5c0 *man/GenePermGSEA.Rd
+bb05b2a59dd688d8d9840d18ddd26dab *man/example.Rd
 d8f874070b73e4856d4080478a4d9c20 *src/AbsFilterGSEA.cpp
 1bd2955169d09ded4a844d44377e1bc0 *src/RcppExports.cpp
-fef6bd3c4c86081ec7cf082953584f28 *vignettes/AbsFilterGSEA.html
-a250284a8f9b446689f7d10e833b7f69 *vignettes/AbsFilterGSEA.pdf
