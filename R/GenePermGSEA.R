@@ -69,6 +69,8 @@ ranksum = function(value, g1, g2)
 #'
 #' @param nPerm The number of gene permutation. Default = 1000.
 #'
+#' @param absoluteGeneScore Boolean. Whether to take absolue to gene score (TRUE) or not (FALSE).
+#'
 #' @param GSEAtype Type of GSEA. Possible value is "absolute", "original" or "absFilter". "absolute" for one-tailed absolute GSEA. "original" for the original two-tailed GSEA. "absFilter" for the original GSEA filtered by the results from the one-tailed absolute GSEA.
 #'
 #' @param FDR FDR cutoff for the original or absolute GSEA. Default = 0.05
@@ -78,6 +80,8 @@ ranksum = function(value, g1, g2)
 #' @param minCount Minimum median count of a gene to be included in the analysis. It is used for gene-filtering to avoid genes having small read counts. Default = 0
 #'
 #' @import Rcpp
+#'
+#' @import Biobase
 #'
 #' @import DESeq
 #'
@@ -100,9 +104,9 @@ ranksum = function(value, g1, g2)
 #' # Create a gene set file and save it to your local directory.
 #' # Note that you can use your local gene set file (tab-delimited like *.gmt file from mSigDB).
 #' # But here, we will generate a toy gene set file to show the structure of this gene set file.
-#' # It consists of 100 gene sets and each contains 50 genes.
+#' # It consists of 50 gene sets and each contains 100 genes.
 #'
-#' for(Geneset in 1:100)
+#' for(Geneset in 1:50)
 #' {
 #'   GenesetName = paste("Geneset", Geneset, sep = "_")
 #'   Genes = paste("Gene", (Geneset*100-99):(Geneset*100), sep="", collapse = '\t')
@@ -132,7 +136,7 @@ ranksum = function(value, g1, g2)
 #' Simon Anders and Wolfgang Huber (2010): Differential expression analysis for sequence count data. Genome Biology 11:R106
 #'
 #' @useDynLib AbsFilterGSEA
-GenePermGSEA = function(countMatrix, GeneScoreType, idxCase, idxControl, GenesetFile, normalization, minGenesetSize=10, maxGenesetSize=300, q=1, nPerm=1000, GSEAtype="absFilter", FDR=0.05, FDRfilter=0.05, minCount=3)
+GenePermGSEA = function(countMatrix, GeneScoreType, idxCase, idxControl, GenesetFile, normalization, minGenesetSize=10, maxGenesetSize=300, q=1, nPerm=1000, absoluteGeneScore = FALSE, GSEAtype="absFilter", FDR=0.05, FDRfilter=0.05, minCount=3)
 {
   dimMat = try(dim(countMatrix))
   if(is.null(dimMat)){stop("The dimension of input count matrix is NULL.")}
@@ -153,8 +157,6 @@ GenePermGSEA = function(countMatrix, GeneScoreType, idxCase, idxControl, Geneset
         }else {stop("Input proper q (weight exponent of enrichment score.)")}
       }
 
-
-  options(scipen=-10)
 
   countMatrix = data.matrix(countMatrix)
 
@@ -196,6 +198,7 @@ GenePermGSEA = function(countMatrix, GeneScoreType, idxCase, idxControl, Geneset
 
   if(class(genescore)=='try-error'){stop("Invalid gene scores. Please check idxCase and idxControl (indices for case and control samples, respectively).")}
 
+  if(absoluteGeneScore){genescore = abs(genescore)}
   if(q!=0 & qType == "integer"){genescore = genescore^q}
   if(q!=0 & qType == "decimal"){genescore = abs(genescore)^q}
   if(q==0){genescore = genescore}
@@ -209,9 +212,9 @@ GenePermGSEA = function(countMatrix, GeneScoreType, idxCase, idxControl, Geneset
   {
     Result_table = Onetailed(genescore_abs, GenesetFile, minGenesetSize, maxGenesetSize, nPerm, FDR, q)
     Result_table = Result_table[order(Result_table[[5]]),]
-    Result_table$NES = format(Result_table$NES, scientific = FALSE)
+    #Result_table$NES = format(Result_table$NES, scientific = FALSE)
     Result_table$Nominal.P.value = as.numeric(Result_table$Nominal.P.value)
-    Result_table$FDR.Q.value = as.numeric(Result_table$FDR.Q.value)
+    Result_table$FDR.Q.value = signif(Result_table$FDR.Q.value,4)
     return(Result_table)
   }
 
@@ -219,9 +222,9 @@ GenePermGSEA = function(countMatrix, GeneScoreType, idxCase, idxControl, Geneset
   {
     Result_table = Twotailed(genescore, GenesetFile, minGenesetSize, maxGenesetSize, nPerm, FDR, q)
     Result_table = Result_table[order(Result_table[[5]]),]
-    Result_table$NES = format(Result_table$NES, scientific = FALSE)
+   # Result_table$NES = format(Result_table$NES, scientific = FALSE)
     Result_table$Nominal.P.value = as.numeric(Result_table$Nominal.P.value)
-    Result_table$FDR.Q.value = as.numeric(Result_table$FDR.Q.value)
+    Result_table$FDR.Q.value = signif(Result_table$FDR.Q.value, 4)
     return(Result_table)
   }
 
@@ -232,9 +235,9 @@ GenePermGSEA = function(countMatrix, GeneScoreType, idxCase, idxControl, Geneset
     Filtered = which(Result_table_ord$GenesetName%in%Result_table_abs$GenesetName)
     Result_table = Result_table_ord[Filtered,]
     Result_table = Result_table[order(Result_table[[5]]),]
-    Result_table$NES = format(Result_table$NES, scientific = FALSE)
+    #Result_table$NES = format(Result_table$NES, scientific = FALSE)
     Result_table$Nominal.P.value = as.numeric(Result_table$Nominal.P.value)
-    Result_table$FDR.Q.value = as.numeric(Result_table$FDR.Q.value)
+    Result_table$FDR.Q.value = signif(Result_table$FDR.Q.value,4)
     return(Result_table)
   }
 }

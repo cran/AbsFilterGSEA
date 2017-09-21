@@ -11,8 +11,8 @@ Li, J. and Tibshirani, R. Finding consistent patterns: A nonparametric approach 
 \usage{
 GenePermGSEA(countMatrix, GeneScoreType, idxCase, idxControl, GenesetFile,
   normalization, minGenesetSize = 10, maxGenesetSize = 300, q = 1,
-  nPerm = 1000, GSEAtype = "absFilter", FDR = 0.05, FDRfilter = 0.05,
-  minCount = 3)
+  nPerm = 1000, absoluteGeneScore = FALSE, GSEAtype = "absFilter",
+  FDR = 0.05, FDRfilter = 0.05, minCount = 3)
 }
 \arguments{
 \item{countMatrix}{Normalized RNA-seq read count matrix.}
@@ -34,6 +34,8 @@ GenePermGSEA(countMatrix, GeneScoreType, idxCase, idxControl, GenesetFile,
 \item{q}{Weight exponent for gene score. For example, if q=0, only rank of gene score is reflected in calculating gene set score (preranked GSEA). If q=1, the gene score itself is used. If q=2, square of the gene score is used.}
 
 \item{nPerm}{The number of gene permutation. Default = 1000.}
+
+\item{absoluteGeneScore}{Boolean. Whether to take absolue to gene score (TRUE) or not (FALSE).}
 
 \item{GSEAtype}{Type of GSEA. Possible value is "absolute", "original" or "absFilter". "absolute" for one-tailed absolute GSEA. "original" for the original two-tailed GSEA. "absFilter" for the original GSEA filtered by the results from the one-tailed absolute GSEA.}
 
@@ -61,9 +63,9 @@ data(example)
 # Create a gene set file and save it to your local directory.
 # Note that you can use your local gene set file (tab-delimited like *.gmt file from mSigDB).
 # But here, we will generate a toy gene set file to show the structure of this gene set file.
-# It consists of 100 gene sets and each contains 50 genes.
+# It consists of 50 gene sets and each contains 100 genes.
 
-for(Geneset in 1:100)
+for(Geneset in 1:50)
 {
   GenesetName = paste("Geneset", Geneset, sep = "_")
   Genes = paste("Gene", (Geneset*100-99):(Geneset*100), sep="", collapse = '\\t')
@@ -84,4 +86,3 @@ Subramanian, A., et al. Gene set enrichment analysis: A knowledge-based approach
 Li, J. and Tibshirani, R. Finding consistent patterns: A nonparametric approach for identifying differential expression in RNA-Seq data. Statistical Methods in Medical Research 2013;22(5):519-536.
 Simon Anders and Wolfgang Huber (2010): Differential expression analysis for sequence count data. Genome Biology 11:R106
 }
-
